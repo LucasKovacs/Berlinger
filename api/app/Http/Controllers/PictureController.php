@@ -19,7 +19,7 @@ class PictureController extends Controller
     {
         $pictures = Picture::all();
 
-        if (!empty($pictures)) {
+        if ($pictures->count() > 0) {
             return response()->json([
                 'success' => true,
                 'code' => 200,
@@ -29,11 +29,11 @@ class PictureController extends Controller
         }
 
         return response()->json([
-            'success' => true,
-            'code' => 204,
+            'success' => false,
+            'code' => 200,
             'error' => 'No results',
             'results' => [],
-        ], 204);
+        ], 200);
     }
 
     /**

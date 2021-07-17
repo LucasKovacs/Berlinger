@@ -9,7 +9,8 @@ class Picture extends Model
 {
     use HasFactory;
 
-    protected $guarded = ['id', 'created_at', 'updated_at'];
+    protected $primaryKey = 'id';
+    protected $guarded = ['id', 'created_at'];
 
     public function getExifAttribute($value)
     {

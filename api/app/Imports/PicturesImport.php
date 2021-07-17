@@ -24,7 +24,9 @@ class PicturesImport implements ToModel, WithBatchInserts, WithValidation, WithC
      */
     public function model(array $row): Picture
     {
+        $title = $row[0];
         $imagePath = Images::store(trim($row[1]));
+        $description = $row[2];
         $imageExif = '';
 
         if (!empty($imagePath)) {
@@ -32,9 +34,9 @@ class PicturesImport implements ToModel, WithBatchInserts, WithValidation, WithC
         }
 
         return new Picture([
-            'title' => trim($row[0]),
+            'title' => $title,
             'url' => $imagePath,
-            'description' => trim($row[2]),
+            'description' => $description,
             'exif' => $imageExif,
         ]);
     }
