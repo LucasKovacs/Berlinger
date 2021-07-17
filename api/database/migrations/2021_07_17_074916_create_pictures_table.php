@@ -18,6 +18,7 @@ class CreatePicturesTable extends Migration
             $table->string('title');
             $table->text('url');
             $table->text('description');
+            $table->text('exif');
             $table->timestamps();
         });
     }

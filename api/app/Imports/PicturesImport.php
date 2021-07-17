@@ -24,10 +24,18 @@ class PicturesImport implements ToModel, WithBatchInserts, WithValidation, WithC
      */
     public function model(array $row): Picture
     {
+        $imagePath = Images::store(trim($row[1]));
+        $imageExif = '';
+
+        if (!empty($imagePath)) {
+            $imageExif = json_encode(Images::readExifData($imagePath));
+        }
+
         return new Picture([
             'title' => trim($row[0]),
-            'url' => Images::store(trim($row[1])),
+            'url' => $imagePath,
             'description' => trim($row[2]),
+            'exif' => $imageExif,
         ]);
     }
 

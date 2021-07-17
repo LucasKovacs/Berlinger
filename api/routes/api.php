@@ -19,7 +19,7 @@ use Illuminate\Support\Facades\Route;
 // });
 
 // Requirement 2: Retrieving the metadata for ALL the already uploaded pictures (JSON response preferred)
-Route::get('pictures/all', PictureController::class . '@index');
+Route::get('pictures', PictureController::class . '@index');
 
 // Requirement 3: Retrieving one single image based on his unique identifier
 Route::get('pictures/{picture}', PictureController::class . '@show');

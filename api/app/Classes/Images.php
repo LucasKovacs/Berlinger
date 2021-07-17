@@ -38,4 +38,19 @@ class Images
 
         return '';
     }
+
+    /**
+     * Read the exif data of an image
+     *
+     * @param string|null $imagePath
+     * @return array
+     */
+    public static function readExifData(?string $imagePath): array
+    {
+        if (self::exists($imagePath)) {
+            $exif = exif_read_data($imagePath, 0, true);
+        }
+
+        return ($exif === false || !isset($exif)) ? [] : $exif;
+    }
 }
