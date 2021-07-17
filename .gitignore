@@ -1,2 +1,2 @@
-
-api/composer.lock
+api/public/images/*
+api/storage/framework/*

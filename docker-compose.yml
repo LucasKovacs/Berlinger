@@ -12,7 +12,7 @@ services:
       - 80:80
       - 443:443
     volumes:
-      - ./api:/var/www/html:cached
+      - ./api:/var/www/html
     networks:
       - laravel
   mysql:
