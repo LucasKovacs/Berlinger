@@ -4,41 +4,59 @@ namespace App\Imports;
 
 use App\Classes\Images;
 use App\Models\Picture;
+use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\Importable;
+use Maatwebsite\Excel\Concerns\SkipsEmptyRows;
+use Maatwebsite\Excel\Concerns\SkipsErrors;
 use Maatwebsite\Excel\Concerns\SkipsFailures;
+use Maatwebsite\Excel\Concerns\SkipsOnError;
 use Maatwebsite\Excel\Concerns\SkipsOnFailure;
-use Maatwebsite\Excel\Concerns\ToModel;
-use Maatwebsite\Excel\Concerns\WithBatchInserts;
+use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithCustomCsvSettings;
 use Maatwebsite\Excel\Concerns\WithStartRow;
-use Maatwebsite\Excel\Concerns\WithValidation;
+use Maatwebsite\Excel\Validators\Failure;
 
-class PicturesImport implements ToModel, WithBatchInserts, WithValidation, WithCustomCsvSettings, WithStartRow, SkipsOnFailure
+class PicturesImport implements WithCustomCsvSettings, WithStartRow, ToCollection, SkipsEmptyRows, SkipsOnError, SkipsOnFailure
 {
-    use Importable, SkipsFailures;
+    use Importable, SkipsErrors, SkipsFailures;
 
     /**
-     * @param array $row
+     * Work with a collection
      *
-     * @return \Illuminate\Database\Eloquent\Model|null
+     * @param Collection $rows
+     * @return void
      */
-    public function model(array $row): Picture
+    public function collection(Collection $rows): void
     {
-        $title = $row[0];
-        $imagePath = Images::store(trim($row[1]));
-        $description = $row[2];
-        $imageExif = '';
+        foreach ($rows as $id => $row) {
+            if (!$this->isValidRow($id, $row)) {
+                continue;
+            }
 
-        if (!empty($imagePath)) {
-            $imageExif = json_encode(Images::readExifData($imagePath));
+            $title = $row[0];
+            $imagePath = Images::store(trim($row[1]));
+            $description = $row[2];
+            $imageExif = '';
+
+            if (!empty($imagePath)) {
+                $imageExif = json_encode(Images::readExifData($imagePath));
+            }
+
+            if ($picture = Picture::where('url', '=', $imagePath)->first()) {
+                $picture->title = $title;
+                $picture->url = $imagePath;
+                $picture->description = $description;
+                $picture->exif = $imageExif;
+                $picture->save();
+            } else {
+                Picture::create([
+                    'title' => $title,
+                    'url' => $imagePath,
+                    'description' => $description,
+                    'exif' => $imageExif,
+                ]);
+            }
         }
-
-        return new Picture([
-            'title' => $title,
-            'url' => $imagePath,
-            'description' => $description,
-            'exif' => $imageExif,
-        ]);
     }
 
     /**
@@ -49,6 +67,7 @@ class PicturesImport implements ToModel, WithBatchInserts, WithValidation, WithC
     public function rules(): array
     {
         return [
+            '0' => 'required',
             '1' => function ($attribute, $value, $onFailure) {
                 if (is_null($value)) {
                     $value = '';
@@ -59,16 +78,6 @@ class PicturesImport implements ToModel, WithBatchInserts, WithValidation, WithC
                 }
             },
         ];
-    }
-
-    /**
-     * Limit the amount of inserts
-     *
-     * @return integer
-     */
-    public function batchSize(): int
-    {
-        return 100;
     }
 
     /**
@@ -91,5 +100,39 @@ class PicturesImport implements ToModel, WithBatchInserts, WithValidation, WithC
         return [
             'delimiter' => '|',
         ];
+    }
+
+    /**
+     * Validate the row
+     *
+     * @param integer $rowId
+     * @param Collection $row
+     * @return boolean
+     */
+    private function isValidRow(int $rowId, Collection $row): bool
+    {
+        if (empty($row[0])) {
+            $this->onFailure(new Failure(
+                $rowId,
+                'Picture Title',
+                ['Title cannot be empty'],
+                $row->toArray()
+            ));
+
+            return false;
+        }
+
+        if (!Images::exists(trim($row[1]))) {
+            $this->onFailure(new Failure(
+                $rowId,
+                'Picture Url',
+                ['Image URL is not accessible.'],
+                $row->toArray()
+            ));
+
+            return false;
+        }
+
+        return true;
     }
 }

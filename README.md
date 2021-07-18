@@ -19,6 +19,7 @@
   - Setup everything and then started working on the logic and interconnection with the lib "Laravel Excel"
 - Tests
  - Setup some basic unit testing
+ - Postman
 
 ## Challenges
 - Docker for some reason from time to time the whole environment stall and had to reset it.
